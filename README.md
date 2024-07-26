@@ -49,8 +49,12 @@ Notes:
 * If a parameter's argument contains spaces, enclose it in `"` characters. For example:
 
   * `--core="C:\Program Files\PowerShell\7\pwsh.exe"`
-  * `--windowtitle="Sample window title"` 
+  * `--windowtitle="Sample window title"`
   * `--workingdirectory="C:\Program Files"`
+
+* If a parameter's argument contains the `"` character, enclose the argument in `"` characters and double the embedded `"` characters. For example:
+
+  * `--windowtitle="Sample ""quoted"" string"`
 
 * **--outputputformat** parameter's argument must be **Text** or **XML** (argument is not case-sensitive)
 

@@ -43,6 +43,7 @@ type
     ErrorMessage: string;
     ConfigurationName: string;
     ConsoleFileName: string;
+    DebugFileName: string;
     DisableExecutionPolicy: Boolean;
     Core: Boolean;
     CorePath: string;
@@ -74,40 +75,40 @@ procedure Usage();
 var
   Msg: string;
 begin
-  Msg := APP_TITLE + ' ' + GetFileVersion(ParamStr(0)) + ' - ' + APP_COPYRIGHT + #10 +
-    #10 +
-    'This is free software and comes with ABSOLUTELY NO WARRANTY.' + #10 +
-    #10 +
-    'Runs a PowerShell script or opens an interactive PowerShell window.' + #10 +
-    #10 +
-    'Usage: ' + APP_TITLE + ' [parameters] [scriptfile [-- parameters]]' + #10 +
-    #10 +
-    'Summary of common parameters:' + #10 +
-    '    --core[="path"] - Use PS Core' + #10 +
-    '    --disableexecutionpolicy - Disable PS execution policy' + #10 +
-    '    --elevate - Request to run as administrator' + #10 +
-    '    --quiet - Suppress error messages' + #10 +
-    '    --windowstyle=style - Specify a window style' + #10 +
-    '    --windowtitle[="text"] - Specify a window title' + #10 +
-    '    --workingdir="path" - Specify a working directory' + #10 +
-    #10 +
-    '--windowstyle style must be one of the following: Normal, Minimized, ' + 
-    'Maximized, Hidden, NormalNotActive, or MinimizedNotActive' + #10 +
-    #10 +
-    'Parameters if running a script:' + #10 +
-    '    --loadprofile - Load PS profile(s) before running script' + #10 +
-    '    --noexit - Keep PS window open after running script' + #10 +
-    '    --noninteractive - Run script non-interactively' + #10 +
-    '    --pause - Pause window after script completes' + #10 +
-    '    --wait - Wait for exit and return process exit code' + #10 +
-    '    scriptfile - Path/filename of script to run' + #10 +
-    '    -- - everything after -- is script parameters' + #10 +
-    #10 +
-    'Parameters if running interactively:' + #10 +
-    '  --interactive - Open interactive PS window' + #10 +
-    '  --noprofile - Do not load PS profile(s)' + #10 +
-    #10 +
-    'Parameter names are case-sensitive.';
+  Msg := APP_TITLE + ' ' + GetFileVersion(ParamStr(0)) + ' - ' + APP_COPYRIGHT + #10
+    + #10
+    + 'This is free software and comes with ABSOLUTELY NO WARRANTY.' + #10
+    + #10
+    + 'Runs a PowerShell script or opens an interactive PowerShell window.' + #10
+    + #10
+    + 'Usage: ' + APP_TITLE + ' [parameters] [scriptfile [-- parameters]]' + #10
+    + #10
+    + 'Summary of common parameters:' + #10
+    + '    --core[="path"] - Use PS Core' + #10
+    + '    --disableexecutionpolicy - Disable PS execution policy' + #10
+    + '    --elevate - Request to run as administrator' + #10
+    + '    --quiet - Suppress error messages' + #10
+    + '    --windowstyle=style - Specify a window style' + #10
+    + '    --windowtitle[="text"] - Specify a window title' + #10
+    + '    --workingdir="path" - Specify a working directory' + #10
+    + #10
+    + '--windowstyle style must be one of the following: Normal, Minimized, '
+    + 'Maximized, Hidden, NormalNotActive, or MinimizedNotActive' + #10
+    + #10
+    + 'Parameters if running a script:' + #10
+    + '    --loadprofile - Load PS profile(s) before running script' + #10
+    + '    --noexit - Keep PS window open after running script' + #10
+    + '    --noninteractive - Run script non-interactively' + #10
+    + '    --pause - Pause window after script completes' + #10
+    + '    --wait - Wait for exit and return process exit code' + #10
+    + '    scriptfile - Path/filename of script to run' + #10
+    + '    -- - everything after -- is script parameters' + #10
+    + #10
+    + 'Parameters if running interactively:' + #10
+    + '  --interactive - Open interactive PS window' + #10
+    + '  --noprofile - Do not load PS profile(s)' + #10
+    + #10
+    + 'Parameter names are case-sensitive.';
   MessageBoxW(0,  // HWND    hWnd
     PChar(Msg),   // LPCWSTR lpText
     APP_TITLE,    // LPCWSTR lpCaption
@@ -116,7 +117,7 @@ end;
 
 procedure TCommandLine.Parse();
 var
-  Opts: array[1..23] of TOption;
+  Opts: array[1..24] of TOption;
   Opt: Char;
   I: Integer;
 begin
@@ -145,138 +146,145 @@ begin
   end;
   with Opts[4] do
   begin
+    Name := 'debug';
+    Has_arg := Required_Argument;
+    Flag := nil;
+    Value := #0;
+  end;
+  with Opts[5] do
+  begin
     Name := 'disableexecutionpolicy';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'D';
   end;
-  with Opts[5] do
+  with Opts[6] do
   begin
     Name := 'elevate';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'e';
   end;
-  with Opts[6] do
+  with Opts[7] do
   begin
     Name := 'help';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'h';
   end;
-  with Opts[7] do
+  with Opts[8] do
   begin
     Name := 'interactive';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'i';
   end;
-  with Opts[8] do
+  with Opts[9] do
   begin
     Name := 'loadprofile';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[9] do
+  with Opts[10] do
   begin
     Name := 'logo';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[10] do
+  with Opts[11] do
   begin
     Name := 'mta';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[11] do
+  with Opts[12] do
   begin
     Name := 'noexit';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[12] do
+  with Opts[13] do
   begin
     Name := 'noninteractive';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'n';
   end;
-  with Opts[13] do
+  with Opts[14] do
   begin
     Name := 'noprofile';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[14] do
+  with Opts[15] do
   begin
     Name := 'outputformat';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[15] do
+  with Opts[16] do
   begin
     Name := 'pause';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'p';
   end;
-  with Opts[16] do
+  with Opts[17] do
   begin
     Name := 'quiet';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'q';
   end;
-  with Opts[17] do
+  with Opts[18] do
   begin
     Name := 'sta';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[18] do
+  with Opts[19] do
   begin
     Name := 'version';
     Has_Arg := Required_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[19] do
+  with Opts[20] do
   begin
     Name := 'wait';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'w';
   end;
-  with Opts[20] do
+  with Opts[21] do
   begin
     Name := 'windowstyle';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := 'W';
   end;
-  with Opts[21] do
+  with Opts[22] do
   begin
     Name := 'windowtitle';
     Has_arg := Optional_Argument;
     Flag := nil;
     Value := 't';
   end;
-  with Opts[22] do
+  with Opts[23] do
   begin
     Name := 'workingdirectory';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := 'd';
   end;
-  with Opts[23] do
+  with Opts[24] do
   begin
     Name := '';
     Has_arg := No_Argument;
@@ -290,6 +298,7 @@ begin
   ConsoleFileName := '';
   Core := false;
   CorePath := '';
+  DebugFileName := '';
   DisableExecutionPolicy := false;
   Elevate := false;
   Help := false;
@@ -310,7 +319,7 @@ begin
   WindowTitle := false;
   WindowTitleText := '';
   WorkingDirectory := '';
-  //OptErr := false;  // no error output from GetOpts
+  //OptErr := false;  // no error output from wgetopts
   repeat
     Opt := GetLongOpts('c::Dd:ehinpqt:wW::', @Opts[1], I);
     case Opt of
@@ -396,6 +405,11 @@ begin
                 ErrorMessage := 'File not found - ''' + ConsoleFilename + '''';
               end;
             end;
+          end;
+          'debug':
+          begin
+            if OptArg <> '' then
+              DebugFileName := OptArg;
           end;
           'loadprofile': LoadProfile := true;
           'logo': Logo := true;
@@ -491,7 +505,7 @@ function GetConfigPolicy(const Core: Boolean): string;
 var
   CfgPolicy: string;
 begin
-  CfgPolicy := 'function Disable-ExecutionPolicy{($c=$ExecutionContext.GetType().GetField(''_context'',''NonPublic,Instance'').GetValue($ExecutionContext)).GetType().GetField(''';
+  CfgPolicy := 'function Disable-ExecutionPolicy{($c=$ExecutionContext.GetType().GetField("_context","NonPublic,Instance").GetValue($ExecutionContext)).GetType().GetField("';
   if Core then
   begin
     CfgPolicy := CfgPolicy + '<AuthorizationManager>k__BackingField';
@@ -500,7 +514,7 @@ begin
   begin
     CfgPolicy := CfgPolicy + '_authorizationManager';
   end;
-  result := CfgPolicy + ''',''NonPublic,Instance'').SetValue($c,(New-Object Management.Automation.AuthorizationManager ''Microsoft.PowerShell''))}';
+  result := CfgPolicy + '","NonPublic,Instance").SetValue($c,(New-Object Management.Automation.AuthorizationManager "Microsoft.PowerShell"))}';
 end;
 
 function AppendStr(const S1, S2, Delim: string): string;
@@ -516,8 +530,9 @@ var
   ExecutableFileName: string;  // Path/filename of powershell.exe or pwsh.exe
   PSType: string;              // Windows PowerShell or PowerShell Core?
   Command: string;             // PowerShell command to run
-  //EncodedCommand: string;    // Encoded command
   Parameters: string;          // Parameters for powershell or pwsh
+  DebugFile: Text;
+  DebugString: string;
   ResultCode: DWORD;
 
 begin
@@ -589,8 +604,8 @@ begin
 
   // Set window title if requested
   if CommandLine.WindowTitle then
-    Command := AppendStr(Command, '$Host.UI.RawUI.WindowTitle=''' +
-      ReplaceStr(CommandLine.WindowTitleText, '''', '''''') + '''', ';');
+    Command := AppendStr(Command, '$Host.UI.RawUI.WindowTitle="' +
+      ReplaceStr(CommandLine.WindowTitleText, '"', '""') + '"', ';');
 
   // Sanity check hidden window
   if CommandLine.WindowStyle = Hidden then
@@ -609,19 +624,12 @@ begin
     begin
       // Add pause if requested
       if CommandLine.Pause then
-        Command := AppendStr(Command, 'Read-Host ''Press ENTER to continue''', ';');
+        Command := AppendStr(Command, 'Read-Host "Press ENTER to continue"', ';');
       // Get exit code if waiting
       if CommandLine.Wait then
         Command := AppendStr(Command, 'exit $LASTEXITCODE', ';');
     end;
   end;
-
-  // Too many anti-mailware programs return false positives when using
-  // -EncodedCommand despite the legitimate use here...
-  // if Command <> '' then
-  //   EncodedCommand := StringToBase64(Command)
-  // else
-  //   EncodedCommand := '';
 
   // Build parameters for powershell.exe or pwsh.exe
   Parameters := '';
@@ -663,13 +671,8 @@ begin
     Parameters := AppendStr(Parameters, '-OutputFormat ' +
       CommandLine.OutputFormat, ' ');
 
-  // Too many anti-mailware programs return false positives when using
-  // -EncodedCommand despite the legitimate use here...
-  // if EncodedCommand <> '' then
-  //   Parameters := AppendStr(Parameters, '-EncodedCommand ' + EncodedCommand, ' ');
-
   if Command <> '' then
-    Parameters := AppendStr(Parameters, '-Command "& { ' + ReplaceStr(Command, '"', '"""') + ' }"', ' ');
+    Parameters := AppendStr(Parameters, '-Command "' + ReplaceStr(Command, '"', '"""') + '"', ' ');
 
   {$IFDEF DEBUG}
   WriteLn();
@@ -712,6 +715,23 @@ begin
   ResultCode := 0;
   {$ENDIF}
 
+  if CommandLine.DebugFileName <> '' then
+  begin
+    Assign(DebugFile, CommandLine.DebugFileName);
+    {$I-}
+    if FileExists(CommandLine.DebugFileName) then
+      Append(DebugFile)
+    else
+      Rewrite(DebugFile);
+    DebugString := 'Executable: ' + ExecutableFileName + sLineBreak;
+    if CommandLine.WorkingDirectory <> '' then
+      DebugString := DebugString + 'Working directory: ' + CommandLine.WorkingDirectory + sLineBreak;
+    DebugString := DebugString + 'Parameters: ' + Parameters;
+    WriteLn(DebugFile, DebugString);
+    Close(DebugFile);
+    {$I+}
+  end;
+
   {$IFNDEF DEBUG}
   if not ShellExec(ExecutableFileName,  // Executable
     Parameters,                         // Parameters
@@ -723,7 +743,7 @@ begin
     ResultCode) then                    // ResultCode
   begin
     if not CommandLine.Quiet then
-      ErrorDialog(GetWindowsMessage(ResultCode, true));
+      ErrorDialog(GetWindowsMessage(ResultCode), ResultCode);
   end;
   {$ENDIF}
 
