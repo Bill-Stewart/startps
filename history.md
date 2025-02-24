@@ -1,8 +1,14 @@
 # startps Version History
 
+* 2.1.0 (2025-02-24)
+
+  * Fix: Runtime error 103 crash instead of message with invalid parameter.
+
+  * Added **--scriptinexedir** (**-s**) option.
+
 * 2.0.1 (2024-07-26)
 
-  * Fix: Support PowerShell variables in `--windowtitle` argument.
+  * Fix: Support PowerShell variables in **--windowtitle** argument.
 
   * Fix: No need for invocation operator (`&`) in command.
 

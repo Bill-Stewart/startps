@@ -56,17 +56,17 @@ Notes:
 
   * `--windowtitle="Sample ""quoted"" string"`
 
-* **--outputputformat** parameter's argument must be **Text** or **XML** (argument is not case-sensitive)
+* The **--outputputformat** parameter's argument must be **Text** or **XML** (the argument is not case-sensitive).
 
-* **--windowstyle** (**-W**) parameter's argument must be one of the following: **Normal**, **Minimized**, **Maximized**, **Hidden**, **NormalNotActive**, or **MinimizedNotActive** (argument is not case-sensitive)
+* The **--windowstyle** (**-W**) parameter's argument must be one of the following: **Normal**, **Minimized**, **Maximized**, **Hidden**, **NormalNotActive**, or **MinimizedNotActive** (the argument is not case-sensitive),
 
-* **--workingdirectory** (**-d**) parameter is ignored if **--elevate** (**-e**) is specified
+* Windows PowerShell ignores the **--workingdirectory** (**-d**) parameter if **--elevate** (**-e**) is specified.
 
-* The **--mta** and **--sta** parameters are mutually exclusive
+* The **--mta** and **--sta** parameters are mutually exclusive.
 
-* The **--consolefilename** and **--version** parameters are specific to Windows PowerShell and are ignored if running PowerShell Core
+* The **--consolefilename** and **--version** parameters are specific to Windows PowerShell and are ignored if running PowerShell Core.
 
-* In practice, the **--version** parameter is only used to start the Windows PowerShell 2.0 engine (i.e., `--version 2`; not recommended)
+* In practice, the **--version** parameter is only used to start the Windows PowerShell 2.0 engine (i.e., `--version 2`; not recommended).
 
 ## PARAMETERS IF RUNNING A SCRIPT
 
@@ -78,15 +78,18 @@ Long Name              | Short Name | Description
 **--noexit**           |            | Keep PS window open after running script
 **--noninteractive**   | **-n**     | Run the script non-interactively
 **--pause**            | **-p**     | Pause window after script completes
+**--scriptinexedir**   | **-s**     | Script is in same directory as executable
 **--wait**             | **-w**     | Wait for exit and return process exit code
 _scriptfile_           |            | Path/filename of script to run
 **--** _script params_ |            | Put script parameters (if any) after **--**
 
 Notes:
 
-* If the script file's path or filename contains spaces, enclose it in `"` characters; e.g.: `"C:\My Scripts\script.ps1"`
+* If the script file's path or filename contains spaces, enclose it in `"` characters; e.g.: `"C:\My Scripts\script.ps1"`.
 
-* **--pause** (**-p**) and **--wait** (**-w**) are ignored if **--noexit** is specified
+* **--pause** (**-p**) and **--wait** (**-w**) are ignored if **--noexit** is specified.
+
+* You can use the **--scriptinexedir** (**-s**) parameter if you place the script file in the same directory as `startps.exe`. This is useful in scenarios where you don't know the full path to the script file (i.e., in a startup or logon script).
 
 ## PARAMETERS IF RUNNING INTERACTIVELY
 

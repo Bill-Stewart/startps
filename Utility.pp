@@ -1,4 +1,4 @@
-{ Copyright (C) 2024 by Bill Stewart (bstewart at iname.com)
+{ Copyright (C) 2024-2025 by Bill Stewart (bstewart at iname.com)
 
   This program is free software: you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free Software
@@ -34,13 +34,11 @@ type
     NormalNotActive    = SW_SHOWNOACTIVATE,
     MinimizedNotActive = SW_SHOWMINNOACTIVE);
 
+function AppendStr(const S1, S2, Delim: string): string;
+
 function IntToStr(const D: DWORD): string;
 
 function IsVistaOrLater(): Boolean;
-
-function LowercaseString(const S: string): string;
-
-function SameText(const S1, S2: string): Boolean;
 
 function GetFileVersion(const FileName: string): string;
 
@@ -49,6 +47,8 @@ function FileExists(const FileName: string): Boolean;
 function DirExists(const DirName: string): Boolean;
 
 function FindFileInPath(const Path, FileName: string): string;
+
+function GetParentPath(const Path: string): string;
 
 function ShellExec(const Executable, Parameters, WorkingDirectory: string;
   const WindowStyle: TWindowStyle; const Wait, Quiet, Elevate: Boolean;
@@ -107,6 +107,19 @@ type
 function ShellExecuteExW(var ShellExecuteInfo: TShellExecuteInfo): BOOL; stdcall;
   external 'shell32.dll';
 
+function AppendStr(const S1, S2, Delim: string): string;
+begin
+  if S1 = '' then
+    result := S2
+  else
+  begin
+    if S1[Length(S1)] <> Delim then
+      result := S1 + Delim + S2
+    else
+      result := S1 + S2;
+  end;
+end;
+
 function IsVistaOrLater(): Boolean;
 var
   OVI: OSVERSIONINFO;
@@ -115,47 +128,6 @@ begin
   OVI.dwOSVersionInfoSize := SizeOf(OSVERSIONINFO);
   if GetVersionEx(OVI) then
     result := (OVI.dwPlatformId = VER_PLATFORM_WIN32_NT) and (OVI.dwMajorVersion >= 6);
-end;
-
-function LowercaseString(const S: string): string;
-var
-  Len: DWORD;
-  pResult: PChar;
-begin
-  result := '';
-  if S = '' then
-    exit;
-  Len := LCMapStringW(LOCALE_USER_DEFAULT,  // LCID    Locale
-    LCMAP_LOWERCASE,                        // DWORD   dwMapFlags
-    PChar(S),                               // LPCWSTR lpSrcStr
-    -1,                                     // int     cchSrc
-    nil,                                    // LPWSTR  lpDestStr
-    0);                                     // int     cchDest
-  if Len = 0 then
-    exit;
-  GetMem(pResult, Len * SizeOf(Char));
-  if LCMapStringW(LOCALE_USER_DEFAULT,  // LCID    Locale
-    LCMAP_LOWERCASE,                    // DWORD   dwMapFlags
-    PChar(S),                           // LPCWSTR lpSrcStr
-    -1,                                 // int     cchSrc
-    pResult,                            // LPWSTR  lpDestStr
-    Len) > 0 then                       // int     cchDest
-  begin
-    result := string(pResult);
-  end;
-  FreeMem(pResult);
-end;
-
-function SameText(const S1, S2: string): Boolean;
-const
-  CSTR_EQUAL = 2;
-begin
-  result := CompareStringW(LOCALE_USER_DEFAULT,  // LCID    Locale
-    LINGUISTIC_IGNORECASE,                       // DWORD   dwCmpFlags
-    PChar(S1),                                   // PCNZWCH lpString1
-    -1,                                          // int     cchCount1
-    PChar(S2),                                   // PCNZWCH lpString2
-    -1) = CSTR_EQUAL;                            // int     cchCount2
 end;
 
 function IntToStr(const D: DWORD): string;
@@ -246,6 +218,23 @@ begin
       result := pFileName;
     end;
     FreeMem(pFileName);
+  end;
+end;
+
+function GetParentPath(const Path: string): string;
+var
+  L, I: Integer;
+begin
+  result := Path;
+  L := Length(Path);
+  if L > 1 then
+  begin
+    for I := L downto 1 do
+      if Path[I] = '\' then
+      begin
+        result := Copy(Path, 1, I - 1);
+        break;
+      end;
   end;
 end;
 

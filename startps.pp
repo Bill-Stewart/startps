@@ -1,4 +1,4 @@
-{ Copyright (C) 2021-2024 by Bill Stewart (bstewart at iname.com)
+{ Copyright (C) 2021-2025 by Bill Stewart (bstewart at iname.com)
 
   This program is free software: you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free Software
@@ -21,17 +21,21 @@ program startps;
 {$MODESWITCH UNICODESTRINGS}
 {$R *.res}
 
+// wargcv and wgetopts - https://github.com/Bill-Stewart/wargcv/
+// WindowsMessages - https://github.com/Bill-Stewart/WindowsMessages
+// WindowsString - https://github.com/Bill-Stewart/WindowsString
 uses
   wargcv,
   wgetopts,
   WindowsMessages,
   WindowsRegistry,
+  WindowsString,
   Utility,
   windows;
 
 const
   APP_TITLE = 'startps';
-  APP_COPYRIGHT = '(C) 2021-2024 by Bill Stewart (bstewart AT iname.com)';
+  APP_COPYRIGHT = '(C) 2021-2025 by Bill Stewart (bstewart AT iname.com)';
   PS_WIN_APPPATH_SUBKEY = 'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\PowerShell.exe';
   PS_WIN_EXECUTABLE_NAME = 'powershell.exe';
   PS_CORE_APPPATH_SUBKEY = 'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\pwsh.exe';
@@ -59,6 +63,7 @@ type
     OutputFormat: string;
     Pause: Boolean;
     Quiet: Boolean;
+    ScriptInExeDir: Boolean;
     STA: Boolean;
     Version: string;
     Wait: Boolean;
@@ -100,6 +105,7 @@ begin
     + '    --noexit - Keep PS window open after running script' + #10
     + '    --noninteractive - Run script non-interactively' + #10
     + '    --pause - Pause window after script completes' + #10
+    + '    --scriptinexedir - Script is in same directory as executable' + #10
     + '    --wait - Wait for exit and return process exit code' + #10
     + '    scriptfile - Path/filename of script to run' + #10
     + '    -- - everything after -- is script parameters' + #10
@@ -117,7 +123,7 @@ end;
 
 procedure TCommandLine.Parse();
 var
-  Opts: array[1..24] of TOption;
+  Opts: array[1..25] of TOption;
   Opt: Char;
   I: Integer;
 begin
@@ -244,47 +250,54 @@ begin
   end;
   with Opts[18] do
   begin
+    Name := 'scriptinexedir';
+    Has_arg := No_Argument;
+    Flag := nil;
+    Value := 's';
+  end;
+  with Opts[19] do
+  begin
     Name := 'sta';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[19] do
+  with Opts[20] do
   begin
     Name := 'version';
     Has_Arg := Required_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[20] do
+  with Opts[21] do
   begin
     Name := 'wait';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'w';
   end;
-  with Opts[21] do
+  with Opts[22] do
   begin
     Name := 'windowstyle';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := 'W';
   end;
-  with Opts[22] do
+  with Opts[23] do
   begin
     Name := 'windowtitle';
     Has_arg := Optional_Argument;
     Flag := nil;
     Value := 't';
   end;
-  with Opts[23] do
+  with Opts[24] do
   begin
     Name := 'workingdirectory';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := 'd';
   end;
-  with Opts[24] do
+  with Opts[25] do
   begin
     Name := '';
     Has_arg := No_Argument;
@@ -312,6 +325,7 @@ begin
   OutputFormat := '';
   Pause := false;
   Quiet := false;
+  ScriptInExeDir := false;
   STA := false;
   Version := '';
   Wait := false;
@@ -319,9 +333,11 @@ begin
   WindowTitle := false;
   WindowTitleText := '';
   WorkingDirectory := '';
-  //OptErr := false;  // no error output from wgetopts
+  {$IFNDEF DEBUG}
+  OptErr := false;  // no error output from wgetopts
+  {$ENDIF}
   repeat
-    Opt := GetLongOpts('c::Dd:ehinpqt:wW::', @Opts[1], I);
+    Opt :=   GetLongOpts('c::Dd:ehinpqst::W:w', @Opts[1], I);
     case Opt of
       'c':
       begin
@@ -353,6 +369,7 @@ begin
       'n': NonInteractive := true;
       'p': Pause := true;
       'q': Quiet := true;
+      's': ScriptInExeDir := true;
       'w': Wait := true;
       'W':
       begin
@@ -418,7 +435,7 @@ begin
           'noprofile': NoProfile := true;
           'outputformat':
           begin
-            if not (SameText(OptArg, 'text') or SameText(OptArg, 'xml')) then
+            if not (SameString(OptArg, 'text') or SameString(OptArg, 'xml')) then
             begin
               ErrorCode := ERROR_INVALID_PARAMETER;
               ErrorMessage :=
@@ -442,6 +459,8 @@ begin
   ScriptFileName := ParamStr(OptInd);
   if ScriptFileName <> '' then
   begin
+    if ScriptInExeDir then
+      ScriptFileName := AppendStr(GetParentPath(ParamStr(0)), ScriptFileName, '\');
     if not FileExists(ScriptFileName) then
     begin
       ErrorCode := ERROR_FILE_NOT_FOUND;
@@ -457,7 +476,7 @@ begin
   if STA and MTA then
   begin
     ErrorCode := ERROR_INVALID_PARAMETER;
-    ErrorMessage := '--mta and --sta are mutually exclusive options';
+    ErrorMessage := '--mta and --sta are mutually exclusive';
   end;
   if (not Interactive) and (ScriptFileName = '') then
   begin
@@ -515,14 +534,6 @@ begin
     CfgPolicy := CfgPolicy + '_authorizationManager';
   end;
   result := CfgPolicy + '","NonPublic,Instance").SetValue($c,(New-Object Management.Automation.AuthorizationManager "Microsoft.PowerShell"))}';
-end;
-
-function AppendStr(const S1, S2, Delim: string): string;
-begin
-  if S1 = '' then
-    result := S2
-  else
-    result := S1 + Delim + S2;
 end;
 
 var
@@ -616,7 +627,7 @@ begin
 
   if CommandLine.ScriptFileName <> '' then
   begin
-    Command := AppendStr(Command, '& "' + CommandLine.ScriptFilename + '"', ';');
+    Command := AppendStr(Command, '& "' + CommandLine.ScriptFileName + '"', ';');
     // Add parameters (if any)
     if CommandLine.ScriptParameters <> '' then
       Command := Command + ' ' + CommandLine.ScriptParameters;
@@ -697,13 +708,14 @@ begin
     WriteLn('OutputFormat:           ', OutputFormat);
     WriteLn('Pause:                  ', Pause);
     WriteLn('Quiet:                  ', Quiet);
+    WriteLn('ScriptInExeDir:         ', ScriptInExeDir);
     WriteLn('Wait:                   ', Wait);
     WriteLn('WindowTitle:            ', WindowTitle);
     WriteLn('WindowTitleText:        ', WindowTitleText);
     WriteLn('WindowStyle:            ', WindowStyle);
     WriteLn('WorkingDirectory:       ', WorkingDirectory);
     WriteLn('Version:                ', Version);
-    WriteLn('ScriptFilename:         ', ScriptFilename);
+    WriteLn('ScriptFileName:         ', ScriptFileName);
     WriteLn('ScriptParameters:       ', ScriptParameters);
   end;
   WriteLn();
