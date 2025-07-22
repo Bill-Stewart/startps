@@ -1,5 +1,9 @@
 # startps Version History
 
+* 2.2.0 (2025-07-22)
+
+  * Added support for `PSPath` environment variable.
+
 * 2.1.0 (2025-02-24)
 
   * Fix: Runtime error 103 crash instead of message with invalid parameter.

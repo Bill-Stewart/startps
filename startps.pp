@@ -40,6 +40,7 @@ const
   PS_WIN_EXECUTABLE_NAME = 'powershell.exe';
   PS_CORE_APPPATH_SUBKEY = 'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\pwsh.exe';
   PS_CORE_EXECUTABLE_NAME = 'pwsh.exe';
+  PS_PATH_ENVVAR_NAME = 'PSPath';
 
 type
   TCommandLine = object
@@ -493,7 +494,7 @@ begin
     MB_ICONERROR);                                  // UINT    uType
 end;
 
-function GetPSPath(const Core: Boolean): string;
+function GetPSPath(const Core: Boolean; out ForceCore: Boolean): string;
 var
   SubKeyName, FileName, Path: string;
 begin
@@ -508,8 +509,17 @@ begin
     SubKeyName := PS_WIN_APPPATH_SUBKEY;
     FileName := PS_WIN_EXECUTABLE_NAME;
   end;
-  // Try registry first
-  if RegGetExpandStringValue('', HKEY_LOCAL_MACHINE, SubKeyName, '', Path) = ERROR_SUCCESS then
+  // Try PSPath environment variable (PowerShell Core)
+  Path := GetExpandedEnvVar(PS_PATH_ENVVAR_NAME);
+  ForceCore := Path <> '';
+  if ForceCore then
+  begin
+    while Path[Length(Path)] = '\' do
+      SetLength(Path, Length(Path) - 1);
+    result := Path + '\' + PS_CORE_EXECUTABLE_NAME;
+  end
+  // Try registry
+  else if RegGetExpandStringValue('', HKEY_LOCAL_MACHINE, SubKeyName, '', Path) = ERROR_SUCCESS then
     result := Path
   else
   begin
@@ -538,6 +548,7 @@ end;
 
 var
   CommandLine: TCommandLine;   // Command line parser object
+  Core: Boolean;               // PS Core?
   ExecutableFileName: string;  // Path/filename of powershell.exe or pwsh.exe
   PSType: string;              // Windows PowerShell or PowerShell Core?
   Command: string;             // PowerShell command to run
@@ -578,19 +589,21 @@ begin
   end;
 
   // Get path/filename of pwsh.exe if specified on command line; otherwise,
-  // get path/filename of pwsh.exe or powershell.exe from registry or Path
-  if CommandLine.Core and (CommandLine.CorePath <> '') then
+  // get path/filename of pwsh.exe or powershell.exe from environment variable,
+  // registry, or Path
+  Core := CommandLine.Core;
+  if Core and (CommandLine.CorePath <> '') then
     ExecutableFileName := CommandLine.CorePath
   else
-    ExecutableFileName := GetPSPath(CommandLine.Core);
+    ExecutableFileName := GetPSPath(CommandLine.Core, Core);
 
-  // Fail if registry and Path searches failed
+  // Searches failed
   if ExecutableFileName = '' then
   begin
-    if not CommandLine.Core then
+    if not Core then
       PSType := 'Windows PowerShell'
     else
-      PSType := 'PowerShell Core';
+      PSType := 'PowerShell';
     ExitCode := ERROR_FILE_NOT_FOUND;
     if not CommandLine.Quiet then
       ErrorDialog('Unable to find ' + PSType +
@@ -610,7 +623,7 @@ begin
   Command := '';
 
   if CommandLine.DisableExecutionPolicy then
-    Command := AppendStr(AppendStr(Command, GetConfigPolicy(CommandLine.Core), ';'),
+    Command := AppendStr(AppendStr(Command, GetConfigPolicy(Core), ';'),
       'Disable-ExecutionPolicy', ';');
 
   // Set window title if requested
@@ -646,7 +659,7 @@ begin
   Parameters := '';
 
   // If used with Windows PowerShell, -Version parameter must be first
-  if (not CommandLine.Core) and (CommandLine.Version <> '') then
+  if (not Core) and (CommandLine.Version <> '') then
     Parameters := AppendStr(Parameters, '-Version "' + CommandLine.Version + '"', ' ');
 
   if CommandLine.Interactive then
@@ -675,7 +688,7 @@ begin
   if CommandLine.ConfigurationName <> '' then
     Parameters := AppendStr(Parameters, '-ConfigurationName "' +
       CommandLine.ConfigurationName + '"', ' ');
-  if (CommandLine.ConsoleFileName <> '') and (not CommandLine.Core) then
+  if (CommandLine.ConsoleFileName <> '') and (not Core) then
     Parameters := AppendStr(Parameters, '-PSConsoleFile "' +
       CommandLine.ConsoleFileName + '"', ' ');
   if CommandLine.OutputFormat <> '' then

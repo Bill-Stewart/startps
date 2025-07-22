@@ -109,7 +109,9 @@ Long Name         | Short Name | Description
 
 ## POWERSHELL CORE
 
-By default, Windows PowerShell is used rather than PowerShell Core. You can run PowerShell Core instead by specifying the **--core** (**-c**) parameter. If you have more than one version of PowerShell Core installed, you can run a specific version by specifying the path and filename of `pwsh.exe` as the argument; e.g.: `--core="C:\Program Files\PowerShell\7\pwsh.exe"`.
+By default, **startps** executes Windows PowerShell rather than PowerShell Core. You can run PowerShell Core instead by specifying the **--core** (**-c**) parameter. If you have more than one version of PowerShell Core installed, you can run a specific version by specifying the path and filename of `pwsh.exe` as the argument; e.g.: `--core="C:\Program Files\PowerShell\7\pwsh.exe"`.
+
+Alternatively, you can set the `PSPath` environment variable to the path of the directory where `pwsh.exe` is installed. If the `PSPath` variable is set, **startps** will use the `pwsh.exe` executable in that directory. If the `PSPath` environment variable is defined, it takes precedence over all other attempts at finding `powershell.exe` or `pwsh.exe`.
 
 ## 32-BIT VS. 64-BIT
 

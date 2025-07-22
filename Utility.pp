@@ -46,6 +46,8 @@ function FileExists(const FileName: string): Boolean;
 
 function DirExists(const DirName: string): Boolean;
 
+function GetExpandedEnvVar(const Name: string): string;
+
 function FindFileInPath(const Path, FileName: string): string;
 
 function GetParentPath(const Path: string): string;
@@ -186,6 +188,52 @@ begin
   Attrs := GetFileAttributesW(PChar(DirName));  // LPCWSTR lpFileName
   result := (Attrs <> INVALID_FILE_ATTRIBUTES) and
     ((Attrs and FILE_ATTRIBUTE_DIRECTORY) <> 0);
+end;
+
+function ExpandEnvStrings(const S: string): string;
+var
+  NumChars: DWORD;
+  pBuffer: PChar;
+begin
+  NumChars := ExpandEnvironmentStringsW(PChar(S),  // LPCWSTR lpSrc
+    nil,                                           // LPWSTR  lpDst
+    0);                                            // DWORD   nSize
+  if NumChars = 0 then
+  begin
+    result := S;  // If fail, return original string
+    exit;
+  end;
+  result := '';
+  GetMem(pBuffer, NumChars * SizeOf(Char));
+  if ExpandEnvironmentStringsW(PChar(S),  // LPCWSTR lpSrc
+    pBuffer,                              // LPWSTR  lpDst
+    NumChars) > 0 then                    // DWORD   nSize
+  begin
+    result := string(pBuffer);
+  end;
+  FreeMem(pBuffer);
+end;
+
+function GetExpandedEnvVar(const Name: string): string;
+var
+  NumChars: DWORD;
+  pBuffer: PChar;
+begin
+  result := '';
+  NumChars := GetEnvironmentVariableW(PChar(Name),  // LPCWSTR lpName
+    nil,                                            // LPWSTR  lpBuffer
+    0);                                             // DWORD   nSize
+  if NumChars > 0 then
+  begin
+    GetMem(pBuffer, NumChars * SizeOf(Char));
+    if GetEnvironmentVariableW(PChar(Name),  // LPCWSTR lpName
+      pBuffer,                               // LPWSTR  lpBuffer
+      NumChars) > 0 then                     // DWORD   nSize
+    begin
+      result := ExpandEnvStrings(string(pBuffer));
+    end;
+    FreeMem(pBuffer);
+  end;
 end;
 
 function FindFileInPath(const Path, FileName: string): string;
