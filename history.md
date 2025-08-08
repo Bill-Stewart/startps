@@ -1,5 +1,9 @@
 # startps Version History
 
+* 2.3.0 (2025-08-08)
+
+  * Added **--modulepath** (**-m**) parameter to append to **PSModulePath** environment variable.
+
 * 2.2.0 (2025-07-22)
 
   * Added support for `PSPath` environment variable.

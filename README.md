@@ -35,6 +35,7 @@ Long Name                        | Short Name      | Description
 **--disableexecutionpolicy**     | **-D**          | Disable PS execution policy
 **--elevate**                    | **-e**          | Request to run as administrator
 **--help**                       | **-h**          | Display usage information
+**--modulepath=**_path_          | **-m** _path_   | Appends _path_ to **PSModulePath**
 **--mta**                        |                 | Use multi-threaded apartment
 **--outputformat=**_format_      |                 | Specify output format (**Text** or **XML**)
 **--quiet**                      | **-q**          | Suppress error messages

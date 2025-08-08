@@ -57,6 +57,7 @@ type
     Interactive: Boolean;
     LoadProfile: Boolean;
     Logo: Boolean;
+    ModulePath: string;
     MTA: Boolean;
     NoExit: Boolean;
     NonInteractive: Boolean;
@@ -124,7 +125,7 @@ end;
 
 procedure TCommandLine.Parse();
 var
-  Opts: array[1..25] of TOption;
+  Opts: array[1..26] of TOption;
   Opt: Char;
   I: Integer;
 begin
@@ -202,103 +203,110 @@ begin
   end;
   with Opts[11] do
   begin
-    Name := 'mta';
-    Has_arg := No_Argument;
+    Name := 'modulepath';
+    Has_arg := Required_Argument;
     Flag := nil;
-    Value := #0;
+    Value := 'm';
   end;
   with Opts[12] do
   begin
-    Name := 'noexit';
+    Name := 'mta';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
   with Opts[13] do
   begin
+    Name := 'noexit';
+    Has_arg := No_Argument;
+    Flag := nil;
+    Value := #0;
+  end;
+  with Opts[14] do
+  begin
     Name := 'noninteractive';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'n';
   end;
-  with Opts[14] do
+  with Opts[15] do
   begin
     Name := 'noprofile';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[15] do
+  with Opts[16] do
   begin
     Name := 'outputformat';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[16] do
+  with Opts[17] do
   begin
     Name := 'pause';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'p';
   end;
-  with Opts[17] do
+  with Opts[18] do
   begin
     Name := 'quiet';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'q';
   end;
-  with Opts[18] do
+  with Opts[19] do
   begin
     Name := 'scriptinexedir';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 's';
   end;
-  with Opts[19] do
+  with Opts[20] do
   begin
     Name := 'sta';
     Has_arg := No_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[20] do
+  with Opts[21] do
   begin
     Name := 'version';
     Has_Arg := Required_Argument;
     Flag := nil;
     Value := #0;
   end;
-  with Opts[21] do
+  with Opts[22] do
   begin
     Name := 'wait';
     Has_arg := No_Argument;
     Flag := nil;
     Value := 'w';
   end;
-  with Opts[22] do
+  with Opts[23] do
   begin
     Name := 'windowstyle';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := 'W';
   end;
-  with Opts[23] do
+  with Opts[24] do
   begin
     Name := 'windowtitle';
     Has_arg := Optional_Argument;
     Flag := nil;
     Value := 't';
   end;
-  with Opts[24] do
+  with Opts[25] do
   begin
     Name := 'workingdirectory';
     Has_arg := Required_Argument;
     Flag := nil;
     Value := 'd';
   end;
-  with Opts[25] do
+  with Opts[26] do
   begin
     Name := '';
     Has_arg := No_Argument;
@@ -319,6 +327,7 @@ begin
   Interactive := false;
   LoadProfile := false;
   Logo := false;
+  ModulePath := '';
   MTA := false;
   NoExit := false;
   NonInteractive := false;
@@ -338,7 +347,7 @@ begin
   OptErr := false;  // no error output from wgetopts
   {$ENDIF}
   repeat
-    Opt :=   GetLongOpts('c::Dd:ehinpqst::W:w', @Opts[1], I);
+    Opt :=   GetLongOpts('c::Dd:ehim:npqst::W:w', @Opts[1], I);
     case Opt of
       'c':
       begin
@@ -367,6 +376,10 @@ begin
       'e': Elevate := true;
       'h': Help := true;
       'i': Interactive := true;
+      'm':
+      begin
+        ModulePath := OptArg;
+      end;
       'n': NonInteractive := true;
       'p': Pause := true;
       'q': Quiet := true;
@@ -528,6 +541,19 @@ begin
     if Path <> '' then
       result := Path;
   end;
+end;
+
+procedure AppendPSModulePath(const ModulePath: string);
+const
+  ENV_VAR_NAME = 'PSModulePath';
+var
+  Path: string;
+begin
+  Path := GetExpandedEnvVar(ENV_VAR_NAME);
+  if Path[Length(Path)] <> ';' then
+    Path := Path + ';';
+  Path := Path + ModulePath;
+  SetEnvironmentVariableW(PChar(ENV_VAR_NAME), PChar(Path));
 end;
 
 function GetConfigPolicy(const Core: Boolean): string;
@@ -698,6 +724,9 @@ begin
   if Command <> '' then
     Parameters := AppendStr(Parameters, '-Command "' + ReplaceStr(Command, '"', '"""') + '"', ' ');
 
+  if CommandLine.ModulePath <> '' then
+    AppendPSModulePath(CommandLine.ModulePath);
+
   {$IFDEF DEBUG}
   WriteLn();
   with CommandLine do
@@ -714,6 +743,7 @@ begin
     WriteLn('Interactive:            ', Interactive);
     WriteLn('LoadProfile:            ', LoadProfile);
     WriteLn('Logo:                   ', Logo);
+    WriteLn('ModulePath:             ', ModulePath);
     WriteLn('MTA:                    ', MTA);
     WriteLn('NoExit:                 ', NoExit);
     WriteLn('NonInteractive:         ', NonInteractive);
